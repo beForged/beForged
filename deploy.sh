@@ -12,3 +12,4 @@ git add -A
 git commit -m "publish"
 
 # push
+git push origin master:master
