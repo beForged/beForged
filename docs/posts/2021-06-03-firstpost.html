@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>My Hakyll Blog - A Statement of the Problem</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">My Hakyll Blog</a>
+            </div>
+            <div id="navigation">
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>A Statement of the Problem</h1>
+
+            <div class="info">
+    Posted on June  3, 2021
+    
+</div>
+
+<p>So one of the projects I am working on in my free time when I want to write some code is a Racket/Scheme (some gross syntactical combination of the two) to x86 compiler written in haskell. I can talk more about how its built later, but that isn’t the focus of this post. Recently, I refactored the parsing/lexing from using the monadic parsing library Parsec to using Alex/Happy lexer/parser generators. This allowed me to have a far cleaner AST where I didn’t have to match on lists and such. This is an Improvement. However, what did result is a large mutually recursive data type that defines my AST. My implementation of Lambdas requires a lot of operations on the AST, from folding to find free variables to transformation to naming/renaming each lambda. Obviously writing hundreds of lines of boilerplate for each operation, and then having it be extremely unextensible isn’t the programmer way, much less the haskell way so I set out to find the generic data type manipulator in haskell. I figured, since haskell data types can be pretty much defined as Sum and Product types then there should be some straightforwards way to do it, but it turns out there has been a lot of different strategies written to do this. So I built a sort of mini example of my recursive datatype and set out to find the best solution.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Sexpr</span> </span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Expr</span> <span class="dt">Expr</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">Const</span> <span class="dt">Const</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Show</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Const</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">I</span> <span class="dt">Int</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">B</span> <span class="dt">Bool</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>    <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Show</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>    </span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Expr</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">If</span> <span class="dt">Sexpr</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">Lambda</span> <span class="dt">String</span> <span class="dt">Sexpr</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a>    <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Show</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a>test <span class="ot">=</span> <span class="dt">Expr</span> (<span class="dt">Lambda</span> <span class="st">&quot;ex&quot;</span> (<span class="dt">Const</span> (<span class="dt">B</span> <span class="dt">True</span>)))</span></code></pre></div>
+<p>Given an AST like this, I wanted (at the minimum) a library that can take a Sexpr (or a list of Sexpr is probably more ideal) and change the String on the Lambda. Ideally it would also let me thread a simple state monad through it so I can ensure that the symbol is unique across the program.</p>
+<p>Haskell has a ton of these; I am not qualified to explain half of them or thier histories, but I will recount what I know as of right now.</p>
+<ul>
+<li>SYB (Scrap Your Boilerplate): An old library that does runtime analysis on the structure of the program and then generates traversals based on that. However, every time I mentioned it to more experienced haskell developers, they told me that it was old (and slow? I have read conflicting material on this stuff), and that GHC.Generics was the more preferred/modern generic library. I will admit however, it does do what I wanted to do; but there was something in me that wanted to use more ‘conventional’ libraries</li>
+<li>GHC.Generics: Seems pretty modern. The generation of the typeclass made a lot of sense to me once I sort of understood the (U1, V1, K1, etc….) but I could not understand how to write an instance declaration that would a. typecheck and b. actually modify the string</li>
+<li>Lens: I believe that this should work, but the size of the library was a bit of an obstacle, and I am under the impression that it requires record types, and my AST is not based on records.</li>
+<li>Uniplate: Actually one library that I would work, but the fact that I had several data types depending on each other meant that Unicomp did not like what I was doing. Admittedly it is possible that I messed it up, but the existence of Biplate and Multiplate makes me less convinced.</li>
+<li>Strafunsky: This seemed similar to SYB (and I believe that it actually is in use in some small languages) but I had a hard time finding practical examples for me to actually base my code (which is my fault to be honest)</li>
+<li>Free Monad: This strategy was recommended to me, but after a lot of reading of ncatlab-esqe pages, I believe that they are more aimed towards generating ASTs and modifying from the start, which wouldn’t work for my use case since I was planning on using Happy to generate my ASTs</li>
+<li>Multiplate: The same strategy as Uniplate, but specifically written so that it could work on mutually recursive datatypes, like the kind I was using for my AST</li>
+</ul>
+<p>When I actually get a full working implementation down, I’ll write it out, but I wanted to list sort of the main ones I found here since I find that there is not a lot of information out there on how to use haskell generics.</p>
+<p>Obviously - I have no Idea what I am doing here, and my category theory is weak enough that talk of comonads makes me glaze over slightly. If you want to correct me please email. I will admit however, I wish there were more examples of these libraries, as they are abstract enough that reading documentation is frequently not enough for a newcomer to this field.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
