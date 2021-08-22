@@ -43,12 +43,13 @@ jobs:
       run: |
         stack exec myblog clean
         stack exec myblog build
-
-    - uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: Build and deploy site
         
     - uses: "finnp/create-file-action@master"
       env:
         FILE_NAME: "docs/CNAME"
         FILE_DATA: "richard-yu.ca"
+        
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Build and deploy site
+        
