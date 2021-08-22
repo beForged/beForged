@@ -16,6 +16,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.ref == 'refs/heads/master'
+      with:
+        ref: ${{ github.head_ref }}
  
     - uses: actions/setup-haskell@v1.1.4
       name: Setup Haskell Stack
@@ -31,11 +33,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        stack build --system-ghc --no-run-tests --no-run-benchmarks --only-dependencies
+        stack build --only-dependencies
 
     - name: Build
       run: |
-        stack build --system-ghc --no-run-tests --no-run-benchmarks
+        stack build
 
     - name: Exec
       run: |
