@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Blithering - Ludum Dare 49</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Blithering</a>
+            </div>
+            <div id="navigation">
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Ludum Dare 49</h1>
+
+            <div class="info">
+    Posted on October  3, 2021
+    
+</div>
+
+<p>I made a bad game, go play it if you want: https://github.com/beForged/potato/releases/tag/v1.0</p>
+<p>So a while back I was looking at game jams, since I sort of wanted to make a game, and I felt like it would be a good way to sort of move my way back into the hackathon sort of coding style. A way to try and complete something (unlike all the other things I leave unfinished…). Also I had the idea for a really stupid small game where you literally just bake a potato. So when I realized ludum dare was coming up, I figured it would be a good way to get back into doing some more ‘for-fun’ programming as opposed to the the more restrictive stuff I do for work.</p>
+<p>I will admit, I wasted a <em>lot</em> of time on random unimportant things in this game. I spent most of Friday evening trying to randomly generate convex polygon walls so that the ‘kitchen’ would be of random size and shape, and although that was interesting and fun to implement, it ended up being far too much work to tune and make workable that I ended up not even using the code at all (the generation code is still in the repo though so you can go and look if you want). I also spent a lot of time on Saturday tuning the mass, drag, angular drag, spring force and damping on the potato. It made me realize that a lot of ‘good’ or ‘satisfying’ game mechanics, like gun recoil/feedback, movement, or interactions involves a lot of tuning and trial and error to get right.</p>
+<p>I entered into the ‘compo’ of the game jam which means that I worked alone (which I did), made all of the graphics (poorly - more on this later), made all the music (some terrible bgm made in flStudio on Sunday). I don’t really feel like any of my stuff measures up, but doing all of it myself was a lot of fun. Even if its bad, I definitely think that I figured out sort of how to use FL (all of your stuff needs to be in the rack, and you make multiple ‘patterns’ using the piano which can use any number of things in the rack, so the backing track can be one pattern, and the melody is another, but the rack keeps all the stuff, sort of like real life - the rack needs to have all the synths (sorta)).</p>
+<p>Graphics-wise, I made the potato in blender, which was more complicated than I thought it would be. The animation screen is confusing. However, I think the modeling screen is probably a little easier to use than a cad screen, but there is no precision compared to CAD. I cant extrude to an edge or face for example. But scuplting is a lot of fun, and you can kind of just do whatever and the results are pretty easy to understand and extend in your mind.</p>
+<p>The game itself is pretty bad, and the code is also not good. Most of it is hacked together in a way that completely disregards any sort of modification in the future. If you want to read it, there are some bits that will probably be sort of useful. Saving to file is implemented (inefficiently but its pretty clear how to make it better), the movement code is mostly stolen from my Game Design project when I was in university (I did write the code so its ‘stolen’ from myself) and so is pretty good (it is for a parkour game after all). and there are neat geometry tricks in there, like the previously mentioned generation of walls in a closed convex polygon. Quaternion and angles are pretty confusing, so it probably would be helpful to read the scripting docs before working on complex geometry, because knowing whats available to you would really help (for example, LookAt turned out to be very useful). Speaking of the game I made in university (named Shadow Parkour), I should probably release it, even though its pretty rough. Maybe someone will want to play it. The source is here if you want it: https://github.com/beForged/425final ; and there is a windows release here: https://github.com/beForged/425final/releases/tag/v1, if you want a build on a different platform, email me and I’ll make one.</p>
+<p>Anyway, at the end of this meander, I suppose its about having fun making a game, and I think I did that. I think I need to do a few more before trying an RPG though. Also, event based system architecture looks better and better as I do more of this sort of user interaction stuff.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
