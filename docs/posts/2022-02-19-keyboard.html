@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Blithering - QMK keyboard flashing on nix</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Blithering</a>
+            </div>
+            <div id="navigation">
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>QMK keyboard flashing on nix</h1>
+
+            <div class="info">
+    Posted on February 19, 2022
+    
+</div>
+
+<p>Well, I finally ‘finished’ the 40% keyboard - screwed the screws onto the case, wrote and flashed the firmware and all that. I don’t think the hardware assembly is particularly interesting or difficult (just remember to measure carefully and remember that it doesnt really matter what sizing you pick as long as it fits together on the inside). The keyboard isnt too bad, although I think I might swap Fn1 and Fn2 as I think having the primary farther out is more ergonomic, although of course it depends on what finger you like to use to press it I suppose. Anyway, on nix the flashing process was a little tricky to start out. I assumed having <code>gcc</code> installed would be enough, but I needed <code>avr-gcc</code> and a whole host of other things. So firstly, clone the git repository for qmk, which I typically use. I think there is a way to compile it from source and then use the <code>&lt;repo&gt;/bin/qmk</code> as the binary, but I couldn’t be bothered to do it/figure out how. I instead just installed qmk as well (I’ll have to remember to remove it from my <code>configuration.nix</code> later) and that worked fine enough. Next step is to go to the keyboards directory and find your keyboard version (I think if this is a totally custom/handwired keyboard you should know how to do this instead of reading this) and take a look at the keymaps that other people have hopefully made before you. I personally like copying a keymap over to my personal folder and modifying it from there. The qmk website and git both have good documentation with regards to keycodes, which is super helpful, even though I am personally not into a lot of the more complex options (like tapping and holding being two different things). After the keymap is written, its now time to compile with <code>qmk compile -kb &lt;keyboard-name&gt; -km &lt;keymap-name&gt;</code>. Keymap name is the name of the folder in the keymaps folder. The compile command will give you pretty standard C errors if you get something wrong, which is helpful as the issues are pretty clear here. On nixOS however, the <code>avr-gcc</code> issue showed up here, as my system is x86_64, and so I need to do something called cross-compile. To cross compile, I wrote a file <code>avrShell.nix</code> as follows</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode nix"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ex">with</span> import <span class="op">&lt;</span>nixpkgs<span class="op">&gt;</span> {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  <span class="ex">crossSystem</span> = {</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    <span class="ex">config</span> = <span class="st">&quot;avr&quot;</span><span class="kw">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>  };</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>};</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="ex">mkShell</span> {</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>  <span class="ex">buildInputs</span> = [ ]<span class="kw">;</span> # <span class="ex">your</span> dependencies here</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>}</span></code></pre></div>
+<p>Typically the config is some generic architecture but if you put avr in, it will enter a temporary nix shell with avr compilation facility. I also needed the usbutils package for <code>lsusb</code> to see the keyboard as well as the dfu-programmer package, but I dont know where to stick them in that nix shell file. Instead, after running <code>nix-shell avrShell.nix</code>, also run <code>nix-shell -p usbutils</code> and <code>nix-shell -p dfu-programmer</code></p>
+<p>we can then compile with the earlier qmk compile command, which will deposit a .hex file into .build folder. then its pretty simple to flash the new configuration keymap onto the keyboard. Reset the keyboard (hopefully you haven’t already installed the keyboard like I did, or there is a key combo to reset like I luckily did; I would recommend placing a keycombo reset out of the way though, it’ll be very helpful when iterating), and then you can run the following commands:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">sudo</span> dfu-programmer atmega32u4 erase</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="fu">sudo</span> dfu-programmer atmega32u4 flash ./.build/<span class="op">&lt;</span>keyboardname<span class="op">&gt;</span>.hex</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="fu">sudo</span> dfu-programmer atmega32u4 reset</span></code></pre></div>
+<p>I think it is for some reason, pretty important to use <code>sudo</code> here, but you can for sure try and see if it works without if you wish. Of course if you have a different microcontroller than an atmega32u4 then it will be a different name. The command lsusb should tell you what the name of the microcontroller is, once the keyboard has been reset. I inserted those three commands into a bash file, so I could just run the bash file to erase and flash the compiled hex onto the keyboard quickly. I think you could probably also include the compile step in there, and have very quick/easy iterations on keymaps.</p>
+<p>Honestly, I think nixOS makes flashing the keyboard a little more tricky, but it isn’t too bad. I definitely think that if I knew more about nix shells, it could be really easy after the first time; just automatically enter the shell and then run a bash script to compile, erase, flash and reset the keyboard.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
